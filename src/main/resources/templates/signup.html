@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <title>Signup</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .cust-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cust-form {
+            width: 100%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container mt-3 cust-container">
+    <div class="card shadow p-4 m-2 mt-4 cust-form">
+        <h2 class="text-info">Sign Up</h2>
+        <p>New user Account</p>
+<!--        <form method="post" th:action="@{/login}" th:object="${login}">-->
+<!--            <label for="email">Email:<input th:field="*{email}" id="email" name="email"  type="email" required></label>-->
+        <form method="post" th:action="@{/users/save_user}"  th:object="${userDto}">
+            <div class="form-floating mb-3 mt-3">
+                <input th:field="*{fullName}" type="text" class="form-control" id="fullName" placeholder="Enter Full name" name="fullName">
+                <label for="fullName">Full name</label>
+            </div>
+            <div class="form-floating mb-3 mt-3">
+                <input th:field="*{email}" type="text" class="form-control" id="email" placeholder="Enter email" name="email">
+                <label for="email">Email</label>
+            </div>
+
+            <div class="form-floating">
+                <select th:field="*{sex}" class="form-select" id="gender" name="gender">
+                    <option  value="female">Female</option>
+                    <option value="male">Male</option>
+                </select>
+                <label for="gender" class="form-label">Select list (select gender):</label>
+            </div>
+
+            <div class="form-floating mb-3 mt-3">
+                <input th:field="*{dateOfBirth}" type="date" class="form-control" id="date" placeholder="Select Date of Birth"
+                       name="dateOfBirth">
+                <label for="date">Date of Birth</label>
+            </div>
+
+            <div class="form-floating mt-3 mb-3">
+                <input th:field="*{password}" type="password" class="form-control" id="pwd" placeholder="Enter password" name="pwd">
+                <label for="pwd">Password</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Account</button>
+            <hr/>
+            <span>Have an account?</span><br/>
+            <a class="btn btn-info text-white">Signin</a>
+        </form>
+    </div>
+</div>
+
+</body>
+
+</html>

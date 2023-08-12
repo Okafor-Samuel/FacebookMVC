@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <title>Facebook Clone</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/dbc64abf3e.js" crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <style>
+        .fakeimg {
+            height: 200px;
+            background: #aaa;
+        }
+        .post-options i{
+            font-size: 24px;
+        }
+
+        #floating-btn-cont{
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+        }
+        #floating-btn{
+            width: 80px;
+            height: 80px;
+            border-radius: 40px;
+            background-color: white;
+            border: none;
+            box-shadow: 2px 2px 2px 2px rgba(22, 19, 19, 0.736);
+            transition: all 0.20s;
+        }
+        #floating-btn:hover{
+            transform: scale(1.20);
+        }
+
+        #floating-btn i{
+            font-size: 30px;
+        }
+    </style>
+    <script>
+        $(document).ready(()=>{
+            window.handleComment=function(postId,authorId){
+                $("#post_id").val(postId);
+                author_id=authorId;
+            }
+            let viewedComments=[];
+            let author_id;
+            let post_id;
+            $('#btn-save-comment').click(()=>{
+                $("#comment-spinner").fadeIn(300);
+                let comment =(String)($('#comment').val());
+                let post_id=(Number)($("#post_id").val());
+                saveComment(comment,post_id)
+            });
+
+            const saveComment=(comment, post_id)=>{
+                $("#comment-response").hide();
+                $("#comment-spinner").fadeIn(200);
+                let sData=JSON.stringify({content:comment,authorId:author_id,postId:post_id});
+                console.log(sData);
+                $.ajax({
+                    url: "/comment/save",
+                    type: "POST",
+                    data: sData,
+                    contentType: "application/json",
+                    success: function (response) {
+                        // Handle the response
+                        if(response.status==1){
+                            $("#comment-spinner").hide();
+                            $("#comment-response").fadeIn(200);
+                            $('#comment').val("");
+                        }
+                        console.log(response.status);
+                        console.log(response.msg);
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle the error
+                        console.log("Error occurred: " + error);
+                    }
+                });
+            }
+            window.handleDelete=function (postId){
+                let sData={postId:postId}
+                $.ajax({
+                    url: "/delete/post",
+                    type: "POST",
+                    data: JSON.stringify(sData),
+                    contentType: "application/json",
+                    success: function (response) {
+                        // Handle the response
+                        if(response.status==1){
+                            location.reload(true);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle the error
+                        console.log("Error occurred: " + error);
+                    }
+                });
+            }
+            window.handleViewComment=function (postId){
+                console.log("View comment worked")
+                let sData={postId:postId}
+                $.ajax({
+                    url: "/comment/pick",
+                    type: "POST",
+                    data: JSON.stringify(sData),
+                    contentType: "application/json",
+                    success: function (response) {
+                        // Handle the response
+                        console.log(response)
+                        updateCommentView(response,postId)
+                        // if(response.status==1){
+                        //     location.reload(true);
+                        // }
+                    },
+                    error: function (xhr, status, error) {
+                        // Handle the error
+                        console.log("Error occurred: " + error);
+                    }
+                });
+            }
+            const updateCommentView=(response,postId)=>{
+                let parent=document.getElementById("element_"+postId);
+                if(response.length<1){
+                    alert("No comment found for this post");
+                }
+                response.forEach(item=>{
+                   if(viewedComments.includes(item.id)){
+                   }else{
+                       viewedComments.push(item.id);
+                        //BUILC CHILD COMPONENT AND APPEND
+                       let p=document.createElement("p");
+                       p.textContent=item.content;
+                       parent.appendChild(p);
+                       p.appendChild(document.createElement("hr"));
+                   }
+                });
+                let parentId="#element_"+postId;
+                $(parentId).fadeIn(500);
+
+            }
+        })
+    </script>
+
+</head>
+<body>
+
+<div class="p-5 bg-primary text-white text-center">
+    <h1>Welcome back, <span th:text="${session.loggedInUser}" ></span> </h1>
+    <p>Facebook, connecting people ...</p>
+</div>
+
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mynavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">Logout</a>
+                </li>
+            </ul>
+            <form class="d-flex">
+                <input class="form-control me-2" type="text" placeholder="Search">
+                <button class="btn btn-primary" type="button">Search</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-sm-10">
+            <div th:each="object :${session.all_posts}"    class="card p-3 post-content">
+<!--                <h2>TITLE HEADING</h2>-->
+                <h5 th:text="${object.dateCreated}"></h5>
+                <p th:text="${object.content}"></p>
+                <hr/>
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="post-options p1">
+                            <button title="Comment" class="btn mr-2 ml-2" th:onclick="'handleComment('+${object.id}+','+${session.loggedInId}+')'" data-bs-toggle="modal" data-bs-target="#myCommentModal" ><i class='fas fa-comment-dots'></i></button>
+                            <button title="Like" class="btn mr-2 ml-2" ><i class='fas fa-smile'></i></button>
+                            <button title="Unlike" class="btn mr-2 ml-2" ><i class='fas fa-frown'></i></i></button>
+                            <button title="View Comments" class="btn mr-2 ml-2" th:onclick="'handleViewComment('+${object.id}+')'" ><i class='far fa-comments'></i></button>
+                            <span th:if="${session.loggedInId==object.authorId}">
+                                <button title="Delete" class="btn mr-2 ml-2" th:onclick="'handleDelete('+${object.id}+')'" ><i class='fas fa-trash'></i></button>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-info text-light"> Likes: <span th:text="${object.likes}"></span> </button>
+                    </div>
+                </div>
+                <div class="p-2" th:id="'element_' + ${object.id}" style="display: none;">
+                    <h4>Comments:</h4>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-sm-2">
+            other info here
+        </div>
+    </div>
+
+    <div id="floating-btn-cont">
+        <button id="floating-btn" title="New Post" data-bs-toggle="modal" data-bs-target="#myModal">
+            <i class='fas fa-pen-alt'></i>
+        </button>
+    </div>
+</div>
+
+<!-- The Modal -->
+<div class="modal" id="myModal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">New Post</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                <form  th:action="@{/posts/save}" th:object="${postDto}" method="POST">
+                    <div class="mb-3 mt-3">
+                        <textarea th:field="*{content}" class="form-control" rows="5" id="post" name="text" placeholder=""></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Post</button>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!--COMMENT MODAL-->
+<!-- The Modal -->
+<div class="modal" id="myCommentModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+
+            <!-- Modal Header -->
+            <div class="modal-header">
+                <h4 class="modal-title">User Comment</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <!-- Modal body -->
+            <div class="modal-body">
+                <div class="mb-3 mt-3">
+                    <input id="post_id"  hidden type="number"/>
+                    <input id="author_id" th:value="${session.loggedInId}"  hidden type="number">
+                    <textarea class="form-control" rows="3" id="comment" name="text"></textarea>
+                </div>
+                <a  class="btn btn-primary text-light" id="btn-save-comment">Save Comment <i class='fas fa-spinner fa-spin' style="display:none;" id="comment-spinner"></i></a> <span id="comment-response" class="text-success" style="display: none;">Saved</span>
+            </div>
+
+            <!-- Modal footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div class="mt-5 p-4 bg-dark text-white text-center">
+  <p>Copyright@Mac. Paul </p>
+</div>
+
+</body>
+</html>
